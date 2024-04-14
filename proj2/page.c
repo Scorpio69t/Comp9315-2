@@ -7,7 +7,8 @@
 #include "page.h"
 
 // internal representation of pages
-struct PageRep {
+struct PageRep
+{
 	Offset free;   // offset within data[] of free space
 	Offset ovflow; // Offset of overflow page (if any)
 	Count ntuples; // #tuples in this page
@@ -30,7 +31,7 @@ Page newPage()
 	p->free = 0;
 	p->ovflow = NO_PAGE;
 	p->ntuples = 0;
-	Count hdr_size = 2*sizeof(Offset) + sizeof(Count);
+	Count hdr_size = 2 * sizeof(Offset) + sizeof(Count);
 	int dataSize = PAGESIZE - hdr_size;
 	memset(p->data, 0, dataSize);
 	return p;
@@ -43,7 +44,7 @@ PageID addPage(FILE *f)
 	assert(ok == 0);
 	int pos = ftell(f);
 	assert(pos >= 0);
-	PageID pid = pos/PAGESIZE;
+	PageID pid = pos / PAGESIZE;
 	Page p = newPage();
 	ok = putPage(f, pid, p);
 	assert(ok == 0);
@@ -56,7 +57,7 @@ Page getPage(FILE *f, PageID pid)
 	assert(pid >= 0);
 	Page p = malloc(PAGESIZE);
 	assert(p != NULL);
-	int ok = fseek(f, pid*PAGESIZE, SEEK_SET);
+	int ok = fseek(f, pid * PAGESIZE, SEEK_SET);
 	assert(ok == 0);
 	int n = fread(p, 1, PAGESIZE, f);
 	assert(n == PAGESIZE);
@@ -67,7 +68,7 @@ Page getPage(FILE *f, PageID pid)
 Status putPage(FILE *f, PageID pid, Page p)
 {
 	assert(pid >= 0);
-	int ok = fseek(f, pid*PAGESIZE, SEEK_SET);
+	int ok = fseek(f, pid * PAGESIZE, SEEK_SET);
 	assert(ok == 0);
 	int n = fwrite(p, 1, PAGESIZE, f);
 	assert(n == PAGESIZE);
@@ -82,12 +83,13 @@ Status addToPage(Page p, Tuple t)
 {
 	int n = tupLength(t);
 	char *c = p->data + p->free;
-	Count hdr_size = 2*sizeof(Offset) + sizeof(Count);
+	Count hdr_size = 2 * sizeof(Offset) + sizeof(Count);
 	// doesn't fit ... return fail code
 	// assume caller will put it elsewhere
-	if (c+n > &p->data[PAGESIZE-hdr_size-2]) return -1;
+	if (c + n > &p->data[PAGESIZE - hdr_size - 2])
+		return -1;
 	strcpy(c, t);
-	p->free += n+1;
+	p->free += n + 1;
 	p->ntuples++;
 	return OK;
 }
@@ -97,8 +99,8 @@ char *pageData(Page p) { return p->data; }
 Count pageNTuples(Page p) { return p->ntuples; }
 Offset pageOvflow(Page p) { return p->ovflow; }
 void pageSetOvflow(Page p, PageID pid) { p->ovflow = pid; }
-Count pageFreeSpace(Page p) {
-	Count hdr_size = 2*sizeof(Offset) + sizeof(Count);
-	return (PAGESIZE-hdr_size-p->free);
+Count pageFreeSpace(Page p)
+{
+	Count hdr_size = 2 * sizeof(Offset) + sizeof(Count);
+	return (PAGESIZE - hdr_size - p->free);
 }
-

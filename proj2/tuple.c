@@ -21,16 +21,19 @@ int tupLength(Tuple t)
 Tuple readTuple(Reln r, FILE *in)
 {
 	char line[MAXTUPLEN];
-	if (fgets(line, MAXTUPLEN-1, in) == NULL)
+	if (fgets(line, MAXTUPLEN - 1, in) == NULL)
 		return NULL;
-	line[strlen(line)-1] = '\0';
+	line[strlen(line) - 1] = '\0';
 	// count fields
 	// cheap'n'nasty parsing
-	char *c; int nf = 1;
+	char *c;
+	int nf = 1;
 	for (c = line; *c != '\0'; c++)
-		if (*c == ',') nf++;
+		if (*c == ',')
+			nf++;
 	// invalid tuple
-	if (nf != nattrs(r)) return NULL;
+	if (nf != nattrs(r))
+		return NULL;
 	return copyString(line); // needs to be free'd sometime
 }
 
@@ -40,19 +43,24 @@ void tupleVals(Tuple t, char **vals)
 {
 	char *c = t, *c0 = t;
 	int i = 0;
-	for (;;) {
-		while (*c != ',' && *c != '\0') c++;
-		if (*c == '\0') {
+	for (;;)
+	{
+		while (*c != ',' && *c != '\0')
+			c++;
+		if (*c == '\0')
+		{
 			// end of tuple; add last field to vals
 			vals[i++] = copyString(c0);
 			break;
 		}
-		else {
+		else
+		{
 			// end of next field; add to vals
 			*c = '\0';
 			vals[i++] = copyString(c0);
 			*c = ',';
-			c++; c0 = c;
+			c++;
+			c0 = c;
 		}
 	}
 }
@@ -62,7 +70,8 @@ void tupleVals(Tuple t, char **vals)
 void freeVals(char **vals, int nattrs)
 {
 	int i;
-	for (i = 0; i < nattrs; i++) free(vals[i]);
+	for (i = 0; i < nattrs; i++)
+		free(vals[i]);
 }
 
 // hash a tuple using the choice vector
@@ -70,34 +79,36 @@ void freeVals(char **vals, int nattrs)
 
 Bits tupleHash(Reln r, Tuple t)
 {
-	char buf[MAXBITS+1];
+	char buf[MAXBITS + 1];
 	Count nvals = nattrs(r);
-	char **vals = malloc(nvals*sizeof(char *));
+	char **vals = malloc(nvals * sizeof(char *));
 	assert(vals != NULL);
 	tupleVals(t, vals);
 	// Bits hash = hash_any((unsigned char *)vals[0],strlen(vals[0]));
 	// bitsString(hash,buf);
 	// printf("hash(%s) = %s\n", vals[0], buf);
 	// return hash;
-	Bits h[nvals+1];
-	Bits res = 0 ,oneBit;
-	int i,a,b,d;
+	Bits h[nvals + 1];
+	Bits res = 0, oneBit;
+	int i, a, b, d;
 	ChVecItem *cv = chvec(r);
 	d = MAXCHVEC;
-	//printf("d %d, page number %d\n",d,npages(r));
+	// printf("d %d, page number %d\n",d,npages(r));
 
-	for(i=0; i<nvals; i++){
-		h[i] = hash_any((unsigned char *)vals[i],strlen(vals[i]));
+	for (i = 0; i < nvals; i++)
+	{
+		h[i] = hash_any((unsigned char *)vals[i], strlen(vals[i]));
 	}
 
-	for (i=0;i<d;i++){
+	for (i = 0; i < d; i++)
+	{
 		a = cv[i].att;
 		b = cv[i].bit;
-		oneBit = bitIsSet(h[a],b);
-		//printf("attr %d bit %d result %d\n",h[a],b,oneBit);
+		oneBit = bitIsSet(h[a], b);
+		// printf("attr %d bit %d result %d\n",h[a],b,oneBit);
 		res = res | (oneBit << i);
 	}
-	bitsString(res,buf);
+	bitsString(res, buf);
 	printf("hash(%s) = %s\n", t, buf);
 	return res;
 }
@@ -107,19 +118,23 @@ Bits tupleHash(Reln r, Tuple t)
 Bool tupleMatch(Reln r, Tuple t1, Tuple t2)
 {
 	Count na = nattrs(r);
-	char **v1 = malloc(na*sizeof(char *));
+	char **v1 = malloc(na * sizeof(char *));
 	tupleVals(t1, v1);
-	char **v2 = malloc(na*sizeof(char *));
+	char **v2 = malloc(na * sizeof(char *));
 	tupleVals(t2, v2);
 	Bool match = TRUE;
 	int i;
-	for (i = 0; i < na; i++) {
+	for (i = 0; i < na; i++)
+	{
 		// assumes no real attribute values start with '?'
-		if (v1[i][0] == '?' || v2[i][0] == '?') continue;
-		if (strcmp(v1[i],v2[i]) == 0) continue;
+		if (v1[i][0] == '?' || v2[i][0] == '?')
+			continue;
+		if (strcmp(v1[i], v2[i]) == 0)
+			continue;
 		match = FALSE;
 	}
-	freeVals(v1,na); freeVals(v2,na);
+	freeVals(v1, na);
+	freeVals(v2, na);
 	return match;
 }
 
@@ -127,5 +142,5 @@ Bool tupleMatch(Reln r, Tuple t1, Tuple t2)
 
 void tupleString(Tuple t, char *buf)
 {
-	strcpy(buf,t);
+	strcpy(buf, t);
 }
